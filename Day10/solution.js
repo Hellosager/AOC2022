@@ -1,5 +1,4 @@
 const operations = input.split(/\n/);
-// const operations = demoInput.split(/\n/);
 var currentCycle = 0;
 var regX = 1;
 
