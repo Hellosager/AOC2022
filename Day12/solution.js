@@ -1,5 +1,5 @@
-// const inputByLine = input.split(/\n/);
-const inputByLine = demoInput.split(/\n/);
+const inputByLine = input.split(/\n/);
+// const inputByLine = demoInput.split(/\n/);
 var heights = [];
 var start;
 var end;
@@ -22,50 +22,91 @@ for(let lineNumber = 0; lineNumber < inputByLine.length; lineNumber++) { // rows
     heights.push(row);
 };
 
+
 function getReachableFields(x, y) {
     let reachableFields = [];
-    let currentHeight = heights[x][y];
-    if(x >= 1 && heights[x-1][y] <= (currentHeight+1)) {
+    let currentHeight = heights[y][x];
+    if(x >= 1 && heights[y][x-1] <= (currentHeight+1)) {
         reachableFields.push({x:x-1, y:y});
     }
-    if(x <= heights[x][y].length-2 && heights[x+1][y] <= (currentHeight+1)) {
+    if(x <= heights[y].length-2 && heights[y][x+1] <= (currentHeight+1)) {
         reachableFields.push({x:x+1, y:y});
     }
-    if(y >= 1 && heights[x][y-1] <= (currentHeight+1)) {
+    if(y >= 1 && heights[y-1][x] <= (currentHeight+1)) {
         reachableFields.push({x:x, y:y-1});
     }
-    if(y <= heights.length-2 && heights[x][y+1] <= (currentHeight+1)) {
+    if(y <= heights.length-2 && heights[y+1][x] <= (currentHeight+1)) {
         reachableFields.push({x:x, y:y+1});
     }
 
     return reachableFields;
 }
 
-function containsEnd(reachableFields) {
-    reachableFields.forEach(field => {
-       if(field.x === end.x && field.y === end.y) {
-           return true;
-       }
+function expandNode(currentNode, openList, closedList) {
+    getReachableFields(currentNode.x, currentNode.y).forEach(successor => {
+        if(closedList.find(node => successor.x === node.x && successor.y === node.y)) {
+
+        } else {
+            let cost = currentNode.value + 1;
+            if(openList.find(node => successor.x === node.x && successor.y === node.y)
+            && (successor.value && cost >= successor.value)) {
+                // nothing
+            } else {
+                successor.predecessor = currentNode;
+                successor.value = cost;
+                if (!openList.find(node => successor.x === node.x && successor.y === node.y)) {
+                    openList.push(successor);
+                }
+            }
+        }
+
     });
-     return false;
 }
 
-// TBD
-function getFieldValue(x, y, depth) {
-    let reachableFields = getReachableFields(x, y);
-    if(containsEnd(reachableFields)) { // we can reach the end, go for it
-        return depth;
-    } else {
-        let lowestValue = 13374206900000000;
-        for(let field of reachableFields) {
-            let fieldValue = getFieldValue(field.x, field.y, depth+1);
-            Math.min(lowestValue, fieldValue);
+function getMostValuableNode(openList) {
+    var mostValuableNodeIndex = 0;
+
+    for (var i = 0; i < openList.length ; i++) {
+        if(openList[i].value < openList[mostValuableNodeIndex]) {
+            mostValuableNodeIndex = i;
         }
-        return lowestValue;
     }
 
-
+    return mostValuableNodeIndex;
 }
 
+function aStar(startNode, endNode) {
+    let openList = [{x:startNode.x, y:startNode.y, value:0}];
+    let closedList = [];
 
-getFieldValue(start.x, start.y, 1);
+    do {
+        let mostValuableNodeIndex = getMostValuableNode(openList);
+        let currentNode = openList[mostValuableNodeIndex];
+        openList.splice(mostValuableNodeIndex, 1);
+        if(currentNode.x === endNode.x && currentNode.y === endNode.y) {
+            return currentNode;
+        }
+
+        closedList.push(currentNode);
+        expandNode(currentNode, openList, closedList);
+    } while(openList.length !== 0);
+}
+
+result1div.innerText = aStar(start, end).value;
+
+
+// part 2
+let lowestStartSteps = 133742069;
+
+for(let y = 0; y < heights.length; y++) {
+    for(let x = 0; x < heights[y].length; x++) {
+        if(heights[y][x] === 'a'.charCodeAt(0)) {
+            let aStarNode = aStar({x:x, y:y}, end);
+            if(aStarNode) {
+                lowestStartSteps = Math.min(lowestStartSteps, aStar({x:x, y:y}, end).value);
+            }
+        }
+    }
+}
+
+result2div.innerText = lowestStartSteps;
